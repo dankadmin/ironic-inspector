@@ -32,9 +32,11 @@ CONF = cfg.CONF
 
 PORT_ID_ITEM_NAME = "port_id"
 SWITCH_ID_ITEM_NAME = "switch_id"
+SYSTEM_NAME_ITEM_NAME = "switch_info"
 
 LLDP_PROC_DATA_MAPPING =\
     {lldp_parsers.LLDP_CHASSIS_ID_NM: SWITCH_ID_ITEM_NAME,
+     lldp_parsers.LLDP_SYS_NAME_NM: SYSTEM_NAME_ITEM_NAME,
      lldp_parsers.LLDP_PORT_ID_NM: PORT_ID_ITEM_NAME}
 
 
@@ -80,6 +82,16 @@ class GenericLocalLinkConnectionHook(base.ProcessingHook):
             if 'mac_address' in chassis_id.subtype:
                 item = SWITCH_ID_ITEM_NAME
                 value = chassis_id.value.value
+        elif tlv_type == tlv.LLDP_TLV_SYS_NAME:
+            try:
+                system_name = tlv.SysName.parse(data)
+            except (core.MappingError, netaddr.AddrFormatError) as e:
+                LOG.warning("TLV parse error for System Name: %s", e,
+                            node_info=node_info)
+                return
+
+            item = SYSTEM_NAME_ITEM_NAME
+            value = system_name.value
 
         if item and value:
             if (not CONF.processing.overwrite_existing and

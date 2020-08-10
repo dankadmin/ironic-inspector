@@ -36,7 +36,8 @@ class TestGenericLocalLinkConnectionHook(test_base.NodeTest):
                         (0, ''),
                         (1, '04885a92ec5459'),
                         (2, '0545746865726e6574312f3138'),
-                        (3, '0078')]
+                        (3, '0078'),
+                        (5, '6c6f63616c546f52312e6578616d706c652e636f6d')]
                 }],
                 'cpu': 1,
                 'disks': 1,
@@ -64,6 +65,8 @@ class TestGenericLocalLinkConnectionHook(test_base.NodeTest):
              'value': 'Ethernet1/18', 'op': 'add'},
             {'path': '/local_link_connection/switch_id',
              'value': '88:5a:92:ec:54:59', 'op': 'add'},
+            {'path': '/local_link_connection/switch_info',
+             'value': 'localToR1.example.com', 'op': 'add'},
         ]
         self.hook.before_update(self.data, self.node_info)
         self.assertCalledWithPatch(patches, mock_patch)
@@ -78,6 +81,8 @@ class TestGenericLocalLinkConnectionHook(test_base.NodeTest):
         patches = [
             {'path': '/local_link_connection/port_id',
              'value': 'Ethernet1/18', 'op': 'add'},
+            {'path': '/local_link_connection/switch_info',
+             'value': 'localToR1.example.com', 'op': 'add'},
         ]
         self.hook.before_update(self.data, self.node_info)
         self.assertCalledWithPatch(patches, mock_patch)
@@ -91,7 +96,9 @@ class TestGenericLocalLinkConnectionHook(test_base.NodeTest):
             2, '0645746865726e6574312f3138')
         patches = [
             {'path': '/local_link_connection/switch_id',
-             'value': '88:5a:92:ec:54:59', 'op': 'add'}
+             'value': '88:5a:92:ec:54:59', 'op': 'add'},
+            {'path': '/local_link_connection/switch_info',
+             'value': 'localToR1.example.com', 'op': 'add'}
         ]
         self.hook.before_update(self.data, self.node_info)
         self.assertCalledWithPatch(patches, mock_patch)
@@ -104,7 +111,9 @@ class TestGenericLocalLinkConnectionHook(test_base.NodeTest):
             {'path': '/local_link_connection/port_id',
              'value': '88:5a:92:ec:54:58', 'op': 'add'},
             {'path': '/local_link_connection/switch_id',
-             'value': '88:5a:92:ec:54:59', 'op': 'add'}
+             'value': '88:5a:92:ec:54:59', 'op': 'add'},
+            {'path': '/local_link_connection/switch_info',
+             'value': 'localToR1.example.com', 'op': 'add'}
         ]
         self.hook.before_update(self.data, self.node_info)
         self.assertCalledWithPatch(patches, mock_patch)
@@ -140,7 +149,9 @@ class TestGenericLocalLinkConnectionHook(test_base.NodeTest):
         cfg.CONF.set_override('overwrite_existing', False, group='processing')
         patches = [
             {'path': '/local_link_connection/switch_id',
-             'value': '88:5a:92:ec:54:59', 'op': 'add'}
+             'value': '88:5a:92:ec:54:59', 'op': 'add'},
+            {'path': '/local_link_connection/switch_info',
+             'value': 'localToR1.example.com', 'op': 'add'}
         ]
         self.hook.before_update(self.data, self.node_info)
         self.assertCalledWithPatch(patches, mock_patch)
@@ -151,7 +162,8 @@ class TestGenericLocalLinkConnectionHook(test_base.NodeTest):
             'em1': {"ip": self.ips[0], "mac": self.macs[0],
                     "lldp_processed": {
                         "switch_chassis_id": "11:22:33:aa:bb:dd",
-                        "switch_port_id": "Ethernet2/66"}
+                        "switch_port_id": "Ethernet2/66",
+                        "switch_system_name": "MySwitch.0"}
                     }
         }
 
@@ -160,6 +172,8 @@ class TestGenericLocalLinkConnectionHook(test_base.NodeTest):
              'value': 'Ethernet2/66', 'op': 'add'},
             {'path': '/local_link_connection/switch_id',
              'value': '11:22:33:aa:bb:dd', 'op': 'add'},
+            {'path': '/local_link_connection/switch_info',
+             'value': 'MySwitch.0', 'op': 'add'},
         ]
         self.hook.before_update(self.data, self.node_info)
         self.assertCalledWithPatch(patches, mock_patch)
@@ -192,6 +206,22 @@ class TestGenericLocalLinkConnectionHook(test_base.NodeTest):
         patches = [
             {'path': '/local_link_connection/port_id',
              'value': 'Ethernet2/66', 'op': 'add'}
+        ]
+        self.hook.before_update(self.data, self.node_info)
+        self.assertCalledWithPatch(patches, mock_patch)
+
+    @mock.patch.object(node_cache.NodeInfo, 'patch_port', autospec=True)
+    def test_processed_data_sysname_only(self, mock_patch):
+        self.data['all_interfaces'] = {
+            'em1': {"ip": self.ips[0], "mac": self.macs[0],
+                    "lldp_processed": {
+                        "switch_system_name": "MySwitch.0"}
+                    }
+        }
+
+        patches = [
+            {'path': '/local_link_connection/switch_info',
+             'value': 'MySwitch.0', 'op': 'add'}
         ]
         self.hook.before_update(self.data, self.node_info)
         self.assertCalledWithPatch(patches, mock_patch)
